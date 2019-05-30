@@ -31,6 +31,7 @@ private:
     Mutex       mLock;
     bool        mRunning;
     const char* mName;
+    pthread_t   mThreadID;
 };
 
 } // namespace yoghurt

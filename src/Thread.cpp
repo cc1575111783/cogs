@@ -3,6 +3,7 @@
 #endif
 
 #include "Thread.h"
+#include "Log.h"
 
 namespace yoghurt
 {
@@ -11,6 +12,9 @@ Thread::Thread()
     mRunning(false),
     mName(NULL)
 {
+#ifdef ANDROID
+    mThreadID = -1;
+#endif
 }
 
 Thread::~Thread()
@@ -28,7 +32,6 @@ bool Thread::run(const char * name)
 
     mName = name;
     mExitPending = false;
-    pthread_t threadID;
 
     pthread_attr_t attr;
     int ret = pthread_attr_init(&attr);
@@ -44,7 +47,7 @@ bool Thread::run(const char * name)
         return false;
     }
 
-    ret = pthread_create(&threadID, &attr, &entryFunction, (void*)this);
+    ret = pthread_create(&mThreadID, &attr, &entryFunction, (void*)this);
     if (ret < 0)
     {
         pthread_attr_destroy(&attr);
@@ -59,6 +62,8 @@ bool Thread::run(const char * name)
 void Thread::requestExitAndWait()
 {
     AutoMutex lock(mLock);
+
+    YFATAL_IF(mRunning && mThreadID == pthread_self());
 
     while (mRunning)
     {
@@ -96,8 +101,6 @@ bool Thread::readyToRun()
 
 void Thread::_threadLoop()
 {
-    bool ret = true;
-
 #ifdef ANDROID
     prctl(PR_SET_NAME, mName);
 #endif
@@ -107,15 +110,11 @@ void Thread::_threadLoop()
         goto OUT;
     }
 
-    do
-    {
-        ret = threadLoop();
-    }
-    while (ret && !exitPending());
+    while (threadLoop() && !exitPending());
 
 OUT:
     AutoMutex lock(mLock);
-    mExitPending = true;
+    mExitPending = false;
     mRunning = false;
     mCondition.boardCast();
 }

@@ -60,7 +60,6 @@ private:
 private:
     typedef std::map<int32_t, Item> Items;
     Items mItems;
-    std::shared_ptr<std::string> a;
 };
 
 }
