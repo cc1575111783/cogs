@@ -10,6 +10,8 @@ add_library(${PROJECT_NAME}
             SHARED
             ${SOURCE_FILES})
 
+add_compile_options(-Wall)
+
 if (ANDROID)
     target_link_libraries(${PROJECT_NAME} log)
 elseif (WIN32)

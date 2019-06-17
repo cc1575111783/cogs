@@ -7,10 +7,9 @@
 
 namespace yoghurt
 {
-Thread::Thread()
-    :mExitPending(false),
-    mRunning(false),
-    mName(NULL)
+Thread::Thread():
+    mExitPending(false),
+    mRunning(false)
 {
 #ifdef ANDROID
     mThreadID = -1;
@@ -22,7 +21,7 @@ Thread::~Thread()
     requestExitAndWait();
 }
 
-bool Thread::run(const char * name)
+bool Thread::run(const char* name)
 {
     AutoMutex lock(mLock);
     if (mRunning)
@@ -75,7 +74,10 @@ void Thread::requestExitAndWait()
 void Thread::requestExit()
 {
     AutoMutex lock(mLock);
-    mExitPending = true;
+    if (mRunning)
+    {
+        mExitPending = true;
+    }
 }
 
 bool Thread::exitPending()
@@ -102,17 +104,20 @@ bool Thread::readyToRun()
 void Thread::_threadLoop()
 {
 #ifdef ANDROID
-    prctl(PR_SET_NAME, mName);
+    if (mName.length() > 0)
+    {
+        prctl(PR_SET_NAME, mName.c_str());
+    }
 #endif
 
     if (!readyToRun())
     {
-        goto OUT;
+        goto EXIT;
     }
 
     while (threadLoop() && !exitPending());
 
-OUT:
+EXIT:
     AutoMutex lock(mLock);
     mExitPending = false;
     mRunning = false;

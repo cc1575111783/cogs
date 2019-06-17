@@ -2,16 +2,18 @@
 #define YOGHURT_THREAD_H
 
 #include <pthread.h>
+#include <string>
 #include "Mutex.h"
 #include "Condition.h"
 
 namespace yoghurt
 {
+
 class Thread
 {
 public:
     Thread();
-    ~Thread();
+    virtual ~Thread();
     bool run(const char* name);
     void requestExitAndWait();
     void requestExit();
@@ -30,10 +32,10 @@ private:
     Condition   mCondition;
     Mutex       mLock;
     bool        mRunning;
-    const char* mName;
+    std::string mName;
     pthread_t   mThreadID;
 };
 
 } // namespace yoghurt
 
-#endif //YOGHURT_THREAD_H
+#endif // YOGHURT_THREAD_H
